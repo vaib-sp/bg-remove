@@ -112,21 +112,6 @@ function cRedo() {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 // import "./style.css";
 
 // var url = "./public/1.jpg";
