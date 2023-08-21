@@ -25,24 +25,122 @@
 
 
 <html xmlns="http://www.w3.org/1999/xhtml">
+
 <head></head>
-<body>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
-    <script type="module" src="index.js"></script>
-    <div align="center">
-        <canvas id="myCanvas" width="600" height="400" style="border:2px solid black"></canvas>
-        <br /><br />
-        <button onclick="javascript:drawImage();return false;">Restore</button>
-        Line width : <select id="selWidth">
-            <option value="1">1</option>
-            <option value="3">3</option>
-            <option value="5">5</option>
-            <option value="7">7</option>
-            <option value="9" selected="selected">9</option>
-            <option value="11">11</option>
-        </select> 
-        <button onclick="javascript:cUndo();return false;">Undo</button>
-        <button onclick="javascript:cRedo();return false;">Redo</button>
-    </div>
+
+<body onload=InitThis();>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+  <script type="text/javascript">
+
+    var mousePressed = false;
+    var lastX, lastY;
+    var ctx;
+
+    function InitThis() {
+      console.log("here");
+      ctx = document.getElementById('myCanvas').getContext("2d");
+      $('#myCanvas').mousedown(function (e) {
+        mousePressed = true;
+        Draw(e.pageX - $(this).offset().left, e.pageY - $(this).offset().top, false);
+      });
+
+      $('#myCanvas').mousemove(function (e) {
+        if (mousePressed) {
+          Draw(e.pageX - $(this).offset().left, e.pageY - $(this).offset().top, true);
+        }
+      });
+
+      $('#myCanvas').mouseup(function (e) {
+        if (mousePressed) {
+          mousePressed = false;
+          cPush();
+        }
+      });
+
+      $('#myCanvas').mouseleave(function (e) {
+        if (mousePressed) {
+          mousePressed = false;
+          cPush();
+        }
+      });
+      drawImage();
+    }
+
+    function drawImage() {
+      var image = new Image();
+      image.src = '/2.webp';
+      $(image).load(function () {
+        ctx.drawImage(image, 0, 0, 600, 400);
+        cPush();
+      });
+    }
+
+    function Draw(x, y, isDown) {
+      if (isDown) {
+        ctx.beginPath();
+        ctx.strokeStyle = "black";
+        ctx.lineWidth = $('#selWidth').val();
+        ctx.lineJoin = "round";
+        ctx.moveTo(lastX, lastY);
+        ctx.lineTo(x, y);
+        ctx.closePath();
+        ctx.stroke();
+      }
+      lastX = x;
+      lastY = y;
+    }
+
+    var cPushArray = new Array();
+    var cStep = -1;
+
+    function cPush() {
+      cStep++;
+      if (cStep < cPushArray.length) { cPushArray.length = cStep; }
+      cPushArray.push(document.getElementById('myCanvas').toDataURL());
+      document.title = cStep + ":" + cPushArray.length;
+    }
+    function cUndo() {
+      if (cStep > 0) {
+        cStep--;
+        var canvasPic = new Image();
+        canvasPic.src = cPushArray[cStep];
+        canvasPic.onload = function () { ctx.drawImage(canvasPic, 0, 0); }
+        document.title = cStep + ":" + cPushArray.length;
+      }
+    }
+    function cRedo() {
+      if (cStep < cPushArray.length - 1) {
+        cStep++;
+        var canvasPic = new Image();
+        canvasPic.src = cPushArray[cStep];
+        canvasPic.onload = function () { ctx.drawImage(canvasPic, 0, 0); }
+        document.title = cStep + ":" + cPushArray.length;
+      }
+    }
+
+
+
+
+  </script>
+  <!-- <script type="module">
+      import InitThis from "./index.js";
+      InitThis();
+    </script> -->
+  <div align="center">
+    <canvas id="myCanvas" width="600" height="400" style="border:2px solid black"></canvas>
+    <br /><br />
+    <button onclick="javascript:drawImage();return false;">Restore</button>
+    Line width : <select id="selWidth">
+      <option value="1">1</option>
+      <option value="3">3</option>
+      <option value="5">5</option>
+      <option value="7">7</option>
+      <option value="9" selected="selected">9</option>
+      <option value="11">11</option>
+    </select>
+    <button onclick="javascript:cUndo();return false;">Undo</button>
+    <button onclick="javascript:cRedo();return false;">Redo</button>
+  </div>
 </body>
+
 </html>

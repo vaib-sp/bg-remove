@@ -1,11 +1,11 @@
-window.addEventListener('load', InitThis)
-
+// window.addEventListener('load', InitThis)
 
 var mousePressed = false;
 var lastX, lastY;
 var ctx;
 
 export default function InitThis() {
+    console.log("here");
     ctx = document.getElementById('myCanvas').getContext("2d");
     $('#myCanvas').mousedown(function (e) {
         mousePressed = true;
