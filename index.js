@@ -5,7 +5,7 @@ var mousePressed = false;
 var lastX, lastY;
 var ctx;
 
-export function InitThis() {
+export default function InitThis() {
     ctx = document.getElementById('myCanvas').getContext("2d");
     $('#myCanvas').mousedown(function (e) {
         mousePressed = true;
