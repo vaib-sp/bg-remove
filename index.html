@@ -16,38 +16,18 @@
 
 
   <div class="controls">
-    <button id="select" type="button" onclick="changeAction(this)">select</button>
-    <button id="erase" type="button" onclick="changeAction(this)">erase</button>
-    <button id="undo" type="button" onclick="changeAction(this)">undo erasing</button>
-    <button id="draw" type="button" onclick="changeAction(this)">draw</button>
-    <button id="spray" type="button" onclick="changeAction(this)">spray</button>
+    <button id="erase" type="button" onclick="changeAction(this)">Erase</button>
+    <button id="undo" type="button" onclick="changeAction(this)">Restore</button>
   </div>
-  <div>
-    <div>
-      <label for="a">
-        background image <code>erasable</code>
-      </label>
-      <input id="a" type="checkbox" onchange="setBgImageErasableProp(this)">
-    </div>
-    <div>
-      <label for="b">
-        remove erased objects on <code>erasing:end</code>
-      </label>
-      <input id="b" type="checkbox" onchange="setErasingRemovesErasedObjects(this)">
-    </div>
-  </div>
-  <div>
+  
+  <!-- <div>
     <button type="button" onclick="toJSON()">toJSON</button>
     <button type="button" onclick="downloadImage()">to Image</button>
     <button type="button" onclick="downloadSVG()">toSVG</button>
-  </div>
+  </div> -->
   <div style="display:flex;flex-direction:row;">
     <div>
       <canvas id="c" width="500" height="620"></canvas>
-    </div>
-    <div style="margin:0 1rem;">
-      <code>erasing:end</code><br>
-      <code id="output">N/A</code>
     </div>
   </div>
 
@@ -56,7 +36,7 @@
 
     let erasingRemovesErasedObjects = false;
     function changeAction(target) {
-      ['select', 'erase', 'undo', 'draw', 'spray'].forEach(action => {
+      [ 'erase', 'undo'].forEach(action => {
         const t = document.getElementById(action);
         t.classList.remove('active');
       });
@@ -183,11 +163,11 @@
           canvas.setBackgroundImage(img);
           // img.set({ erasable: false });
           canvas.on("erasing:end", ({ targets, drawables }) => {
-            var output = document.getElementById("output");
-            output.innerHTML = JSON.stringify({
-              objects: targets.map((t) => t.type),
-              drawables: Object.keys(drawables)
-            }, null, '\t');
+            // var output = document.getElementById("output");
+            // output.innerHTML = JSON.stringify({
+            //   objects: targets.map((t) => t.type),
+            //   drawables: Object.keys(drawables)
+            // }, null, '\t');
             if (erasingRemovesErasedObjects) {
               targets.forEach(obj => obj.group?.removeWithUpdate(obj) || canvas.remove(obj));
             }
