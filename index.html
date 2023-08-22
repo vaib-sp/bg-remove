@@ -1,235 +1,129 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html>
 
 <head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vite App</title>
+  <title>Semantic Segmentation UI</title>
+  <style>
+    #canvasContainer {
+      position: relative;
+      width: 500px;
+      height: 500px;
+    }
+
+    #maskCanvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+  </style>
 </head>
 
-<style>
-
-
-
-
-/* CSS */
-.button-1 {
-  background-color: #007e34;
-  border-radius: 8px;
-  border-style: solid;
-  border-color: black;
-  color: #FFFFFF;
-  cursor: pointer;
-  display: inline-block;
-  font-family: "Haas Grot Text R Web", "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  list-style: none;
-  margin: 0;
-  outline: none;
-  padding: 5px 14px;
-  position: relative;
-  text-align: center;
-  text-decoration: none;
-  transition: color 100ms;
-  vertical-align: baseline;
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: manipulation;
-}
-
-.button-1:hover{
-  background-color: #66a781;
-}
-
-button.active {
-  background: rgb(0, 156, 184);
-  color: aliceblue;
-  font-weight: bold;
-} 
-button.active:hover{
-  background-color: rgb(71, 154, 168);
-}
-
-
-
-
-
-</style>
-
 <body>
-  <!-- <script src="./fabric.min.js" type="text/javascript"></script> -->
-  <script src="https://unpkg.com/fabric@latest/dist/fabric.js"></script>
-  <script src="https://unpkg.com/fabric@latest/src/mixins/eraser_brush.mixin.js"></script>
+  <input type="file" id="imageUpload" />
+  <button onclick="setBrush(0)">Brush</button>
+  <button onclick="setBrush(2)">Erase Mask</button>
+  <button id="downloadBtn">Download Masked Image</button>
 
 
-
- 
-  <br>
-  <!-- <div>
-    <button type="button" onclick="toJSON()">toJSON</button>
-    <button type="button" onclick="downloadImage()">to Image</button>
-    <button type="button" onclick="downloadSVG()">toSVG</button>
-  </div> -->
-  <div style="display:flex;flex-direction:row;">
-    <div>
-      <canvas id="c" width="500" height="320"></canvas>
-    </div>
+  <div style="display: flex ;margin-top: 10px; font-weight: 800;">
+    <span>Opacity :</span>
+    <input type="range" min="0.00" max="1.00" value="1.00" step=".01" id="opacitySlider" />
   </div>
-  <div class="controls">
-    <button class="button-1" id="erase" type="button" onclick="changeAction(this)">Erase</button>
-    <button class="button-1" id="undo" type="button" onclick="changeAction(this)">Restore</button>
+  <div style="display: flex ;margin-top: 10px; font-weight: 800;">
+    <span>Bursh width :</span>
+    <input type="range" min="2" max="20" value="10" id="widthSlider" />
   </div>
 
-  <script type="text/javascript">
+  <div id="canvasContainer">
+    <canvas id="mainCanvas" width="500" height="500"></canvas>
+    <canvas id="maskCanvas" width="500" height="500"></canvas>
+  </div>
+  <script>
 
-    let erasingRemovesErasedObjects = false;
-    function changeAction(target) {
-      
-      [ 'erase', 'undo'].forEach(action => {
-        const t = document.getElementById(action);
-        t.classList.remove('active');
-      });
-      if (typeof target === 'string') target = document.getElementById(target);
-      target.classList.add('active');
-      console.log(target);
+    var mainCanvas = document.getElementById('mainCanvas');
+    var maskCanvas = document.getElementById('maskCanvas');
+    var mainCtx = mainCanvas.getContext('2d');
+    var maskCtx = maskCanvas.getContext('2d');
 
-      switch (target.id) {
-        case "select":
-          canvas.isDrawingMode = false;
-          break;
-        case "erase":
-          canvas.freeDrawingBrush = new fabric.EraserBrush(canvas);
-          canvas.freeDrawingBrush.width = 10;
-          canvas.isDrawingMode = true;
-          break;
-        case "undo":
-          canvas.freeDrawingBrush = new fabric.EraserBrush(canvas);
-          canvas.freeDrawingBrush.width = 10;
-          canvas.freeDrawingBrush.inverted = true;
-          canvas.isDrawingMode = true;
+    var mask = new ImageData(500, 500); // Example dimensions
+    var brush = 0; // 0 for foreground, 1 for background, 2 for no mask
 
+    // Loading image and initial rendering
+    document.getElementById('imageUpload').addEventListener('change', function (e) {
+      var reader = new FileReader();
+      reader.onload = function (event) {
+        var img = new Image();
+        img.onload = function () {
+          mainCtx.drawImage(img, 0, 0);
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    });
 
-          break;
-        case "draw":
-          canvas.freeDrawingBrush = new fabric.PencilBrush(canvas);
-          canvas.freeDrawingBrush.width = 35;
-          canvas.isDrawingMode = true;
-          break;
-        case "spray":
-          canvas.freeDrawingBrush = new fabric.SprayBrush(canvas);
-          canvas.freeDrawingBrush.width = 35;
-          canvas.isDrawingMode = true;
-          break;
-        default:
-          break;
+    function setBrush(value) {
+      brush = value;
+    }
+
+    var isPress = false;
+    var old = null;
+    let brushSize = 10;
+
+    maskCanvas.addEventListener("mousedown", function (e) {
+      isPress = true;
+      old = { x: e.offsetX, y: e.offsetY };
+    });
+    maskCanvas.addEventListener("mousemove", function (e) {
+      if (isPress) {
+        var x = e.offsetX;
+        var y = e.offsetY;
+
+        if (brush === 2) {
+          maskCtx.clearRect(x, y, brushSize, brushSize); // Example brush size
+        } else {
+          maskCtx.beginPath();
+          maskCtx.strokeStyle = "black";
+          maskCtx.lineWidth = brushSize;
+          maskCtx.lineJoin = "round";
+          maskCtx.moveTo(old.x, old.y);
+          maskCtx.lineTo(x, y);
+          maskCtx.closePath();
+          maskCtx.stroke();
+        }
+        old = { x: x, y: y };
       }
-    }
-    function init() {
-      fabric.Image.fromURL('https://upload.wikimedia.org/wikipedia/commons/1/15/Cat_August_2010-4.jpg',
-        function (img) {
-          // img.set("erasable", false);
-          img.scaleToWidth(480);
-          img.clone((img) => {
-            canvas.add(
-              img
-                .set({
-                  left: 400,
-                  top: 350,
-                  clipPath: new fabric.Circle({
-                    radius: 200,
-                    originX: "center",
-                    originY: "center"
-                  }),
-                  angle: 30
-                })
-                .scale(0.25)
-            );
-            canvas.renderAll();
-          });
+    });
+    maskCanvas.addEventListener("mouseup", function (e) {
+      isPress = false;
+    });
 
-          canvas.setBackgroundImage(img);
-          // img.set({ erasable: false });
-          canvas.on("erasing:end", ({ targets, drawables }) => {
-            // console.log("herheh");
-            // var output = document.getElementById("output");
-            // output.innerHTML = JSON.stringify({
-            //   objects: targets.map((t) => t.type),
-            //   drawables: Object.keys(drawables)
-            // }, null, '\t');
-            if (erasingRemovesErasedObjects) {
-              targets.forEach(obj => obj.group?.removeWithUpdate(obj) || canvas.remove(obj));
-            }
-          })
-          canvas.renderAll();
-        },
-        { crossOrigin: "anonymous" }
-      );
 
-    
+    // Downloading the masked image
+    document.getElementById('downloadBtn').addEventListener('click', function () {
+      maskCanvas.toBlob(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'masked-image.png';
+        a.click();
+      });
+    });
+
+
+    var slider = document.getElementById("opacitySlider");
+    // Update the current slider value (each time you drag the slider handle)
+    slider.oninput = function () {
+      // maskCtx.globalAlpha = this.value;
+      // maskCtx.fill();
+      maskCanvas.style.opacity = this.value;
     }
 
-    // const setDrawableErasableProp = (drawable, value) => {
-    //   canvas.get(drawable)?.set({ erasable: value });
-    //   changeAction('erase');
-    // };
-
-    // const setBgImageErasableProp = (input) =>
-    //   setDrawableErasableProp("backgroundImage", input.checked);
-
-    // const setErasingRemovesErasedObjects = (input) =>
-    //   (erasingRemovesErasedObjects = input.checked);
-
-    // const downloadImage = () => {
-    //   const ext = "png";
-    //   const base64 = canvas.toDataURL({
-    //     format: ext,
-    //     enableRetinaScaling: true
-    //   });
-    //   const link = document.createElement("a");
-    //   link.href = base64;
-    //   link.download = `eraser_example.${ext}`;
-    //   link.click();
-    // };
-
-    // const downloadSVG = () => {
-    //   const svg = canvas.toSVG();
-    //   const a = document.createElement("a");
-    //   const blob = new Blob([svg], { type: "image/svg+xml" });
-    //   const blobURL = URL.createObjectURL(blob);
-    //   a.href = blobURL;
-    //   a.download = "eraser_example.svg";
-    //   a.click();
-    //   URL.revokeObjectURL(blobURL);
-    // };
-
-    // const toJSON = async () => {
-    //   const json = canvas.toDatalessJSON(["clipPath", "eraser"]);
-    //   const out = JSON.stringify(json, null, "\t");
-    //   const blob = new Blob([out], { type: "text/plain" });
-    //   const clipboardItemData = { [blob.type]: blob };
-    //   try {
-    //     navigator.clipboard &&
-    //       (await navigator.clipboard.write([
-    //         new ClipboardItem(clipboardItemData)
-    //       ]));
-    //   } catch (error) {
-    //     console.log(error);
-    //   }
-    //   const blobURL = URL.createObjectURL(blob);
-    //   const a = document.createElement("a");
-    //   a.href = blobURL;
-    //   a.download = "eraser_example.json";
-    //   a.click();
-    //   URL.revokeObjectURL(blobURL);
-    // };
-    
-    const canvas = this.__canvas = new fabric.Canvas('c');
-    init();
+    var brushSlider = document.getElementById("widthSlider");
+    // Update the current slider value (each time you drag the slider handle)
+    brushSlider.oninput = function () {
+      brushSize = this.value;
+    }
   </script>
-
-
 </body>
 
 </html>

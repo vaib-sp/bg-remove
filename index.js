@@ -113,62 +113,62 @@ function cRedo() {
 
 
 
-// import "./style.css";
+import "./style.css";
 
-// var url = "./public/1.jpg";
-// var canvas = document.getElementById("canvas");
-// var ctx = canvas.getContext("2d");
-// var img = new Image();
-// var dwn = document.getElementById("dwn");
+var url = "./public/1.jpg";
+var canvas = document.getElementById("canvas");
+var ctx = canvas.getContext("2d");
+var img = new Image();
+var dwn = document.getElementById("dwn");
 
 
-// // img.setAttribute('crossorigin', 'anonymous');
-// img.src = url;
-// img.onload = function () {
-//   var width = Math.min(500, img.width);
-//   var height = img.height * (width / img.width);
+// img.setAttribute('crossorigin', 'anonymous');
+img.src = url;
+img.onload = function () {
+  var width = Math.min(500, img.width);
+  var height = img.height * (width / img.width);
 
-//   canvas.width = width;
-//   canvas.height = height;
-//   ctx.drawImage(img, 0, 0, width, height);
-// };
+  canvas.width = width;
+  canvas.height = height;
+  ctx.drawImage(img, 0, 0, width, height);
+};
 
-// var isPress = false;
-// var old = null;
-// canvas.addEventListener("mousedown", function (e) {
-//   isPress = true;
-//   old = { x: e.offsetX, y: e.offsetY };
-// });
-// canvas.addEventListener("mousemove", function (e) {
-//   if (isPress) {
-//     var img = canvas.toDataURL("image/png");
-//     dwn.href = img
+var isPress = false;
+var old = null;
+canvas.addEventListener("mousedown", function (e) {
+  isPress = true;
+  old = { x: e.offsetX, y: e.offsetY };
+});
+canvas.addEventListener("mousemove", function (e) {
+  if (isPress) {
+    var img = canvas.toDataURL("image/png");
+    dwn.href = img
 
-//     var x = e.offsetX;
-//     var y = e.offsetY;
-//     ctx.globalCompositeOperation = "destination-out";
+    var x = e.offsetX;
+    var y = e.offsetY;
+    ctx.globalCompositeOperation = "destination-out";
 
-//     ctx.beginPath();
-//     ctx.arc(x, y, 10, 0, 2 * Math.PI);
-//     ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, 2 * Math.PI);
+    ctx.fill();
 
-//     ctx.lineWidth = 20;
-//     ctx.beginPath();
-//     ctx.moveTo(old.x, old.y);
-//     ctx.lineTo(x, y);
-//     ctx.stroke();
+    ctx.lineWidth = 20;
+    ctx.beginPath();
+    ctx.moveTo(old.x, old.y);
+    ctx.lineTo(x, y);
+    ctx.stroke();
 
-//     old = { x: x, y: y };
-//   }
-// });
-// canvas.addEventListener("mouseup", function (e) {
-//   isPress = false;
-// });
+    old = { x: x, y: y };
+  }
+});
+canvas.addEventListener("mouseup", function (e) {
+  isPress = false;
+});
 
-// dwn.addEventListener("click", function (e) {
-//   var img = canvas.toDataURL("image/png");
-//   document.write('<img src="' + img + '"/>');
-// });
+dwn.addEventListener("click", function (e) {
+  var img = canvas.toDataURL("image/png");
+  document.write('<img src="' + img + '"/>');
+});
 
 
 
