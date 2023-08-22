@@ -105,3 +105,9 @@ button:focus-visible {
 canvas {
   background: transparent;
 }
+
+
+button.active {
+  background: limegreen;
+  font-weight: bold
+}
