@@ -79,17 +79,19 @@
         var y = e.offsetY;
 
         if (brush === 2) {
-          maskCtx.clearRect(x, y, brushSize, brushSize); // Example brush size
+          maskCtx.globalCompositeOperation = "destination-out";
         } else {
-          maskCtx.beginPath();
-          maskCtx.strokeStyle = "black";
-          maskCtx.lineWidth = brushSize;
-          maskCtx.lineJoin = "round";
-          maskCtx.moveTo(old.x, old.y);
-          maskCtx.lineTo(x, y);
-          maskCtx.closePath();
-          maskCtx.stroke();
+          maskCtx.globalCompositeOperation = "source-over";
         }
+        
+        maskCtx.beginPath();
+        maskCtx.strokeStyle = "red";
+        maskCtx.lineWidth = brushSize;
+        maskCtx.lineJoin = "round";
+        maskCtx.moveTo(old.x, old.y);
+        maskCtx.lineTo(x, y);
+        maskCtx.closePath();
+        maskCtx.stroke();
         old = { x: x, y: y };
       }
     });
